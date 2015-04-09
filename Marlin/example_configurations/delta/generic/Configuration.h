@@ -484,27 +484,36 @@ const bool Z_PROBE_ENDSTOP_INVERTING = true; // set to true to invert the logic 
 
 //   #define Z_PROBE_END_SCRIPT "G1 Z10 F12000\nG1 X15 Y330\nG1 Z0.5\nG1 Z10" //These commands will be executed in the end of G29 routine.
                                                                             //Useful to retract a deployable probe.
-                                                                           
+
   //#define Z_PROBE_SLED // turn on if you have a z-probe mounted on a sled like those designed by Charles Bell
   //#define SLED_DOCKING_OFFSET 5 // the extra distance the X axis must travel to pickup the sled. 0 should be fine but you can push it further if you'd like.
 
-  // Allen key retractable z-probe as seen on many Kossel delta printers - http://reprap.org/wiki/Kossel#Automatic_bed_leveling_probe
-  // Deploys by touching z-axis belt. Retracts by pushing the probe down. Uses Z_MIN_PIN.
-  //#define Z_PROBE_ALLEN_KEY
-  #ifdef Z_PROBE_ALLEN_KEY
-    #define Z_PROBE_ALLEN_KEY_DEPLOY_X 30
-    #define Z_PROBE_ALLEN_KEY_DEPLOY_Y DELTA_PRINTABLE_RADIUS
-    #define Z_PROBE_ALLEN_KEY_DEPLOY_Z 100
-    
-    #define Z_PROBE_ALLEN_KEY_STOW_X     -64
-    #define Z_PROBE_ALLEN_KEY_STOW_Y     56
-    #define Z_PROBE_ALLEN_KEY_STOW_Z     23
-    #define Z_PROBE_ALLEN_KEY_STOW_DEPTH 20
+  // Retractable z-probe as seen on many Kossel delta printers - http://reprap.org/wiki/Kossel#Automatic_bed_leveling_probe
+  // Deploys by touching z-axis belt or arms. Retracts by pushing the probe down. Uses Z_MIN_PIN.
+  //#define Z_PROBE_DEPLOY
+  #ifdef Z_PROBE_DEPLOY
+    #define Z_PROBE_DEPLOY_1_X 30
+    #define Z_PROBE_DEPLOY_1_Y DELTA_PRINTABLE_RADIUS
+    #define Z_PROBE_DEPLOY_1_Z 100
+    #define Z_PROBE_DEPLOY_1_FEEDRATE HOMING_FEEDRATE_X
+    #define Z_PROBE_DEPLOY_2_X 0
+    #define Z_PROBE_DEPLOY_2_Y DELTA_PRINTABLE_RADIUS
+    #define Z_PROBE_DEPLOY_2_Z 100
+    #define Z_PROBE_DEPLOY_2_FEEDRATE HOMING_FEEDRATE_X/10
+    #define Z_PROBE_DEPLOY_3_X 0
+    #define Z_PROBE_DEPLOY_3_Y 0
+    #define Z_PROBE_DEPLOY_3_Z 100
+    #define Z_PROBE_DEPLOY_3_FEEDRATE (HOMING_FEEDRATE_X/2)
+
+    #define Z_PROBE_STOW_X     -64
+    #define Z_PROBE_STOW_Y     56
+    #define Z_PROBE_STOW_Z     23
+    #define Z_PROBE_STOW_DEPTH 20
   #endif
-  
-  //If defined, the Probe servo will be turned on only during movement and then turned off to avoid jerk
-  //The value is the delay to turn the servo off after powered on - depends on the servo speed; 300ms is good value, but you can try lower it.
-  // You MUST HAVE the SERVO_ENDSTOPS defined to use here a value higher than zero otherwise your code will not compile.
+
+//If defined, the Probe servo will be turned on only during movement and then turned off to avoid jerk
+//The value is the delay to turn the servo off after powered on - depends on the servo speed; 300ms is good value, but you can try lower it.
+// You MUST HAVE the SERVO_ENDSTOPS defined to use here a value higher than zero otherwise your code will not compile.
 
 //  #define PROBE_SERVO_DEACTIVATION_DELAY 300
 
@@ -559,9 +568,13 @@ const bool Z_PROBE_ENDSTOP_INVERTING = true; // set to true to invert the logic 
  * MOVEMENT SETTINGS
  */
 
-
+// set the homing speeds (mm/min)
 // delta homing speeds must be the same on xyz
-#define HOMING_FEEDRATE {200*60, 200*60, 200*60, 0}  // set the homing speeds (mm/min)
+#define HOMING_FEEDRATE_X (200*60)
+#define HOMING_FEEDRATE_Y (200*60)
+#define HOMING_FEEDRATE_Z (200*60)
+#define HOMING_FEEDRATE_E 0
+#define HOMING_FEEDRATE {HOMING_FEEDRATE_X,HOMING_FEEDRATE_Y,HOMING_FEEDRATE_Z,HOMING_FEEDRATE_E}
 
 // default settings
 // delta speeds must be the same on xyz

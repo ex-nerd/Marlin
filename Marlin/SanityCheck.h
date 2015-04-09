@@ -248,8 +248,8 @@
   /**
    * Allen Key Z Probe requires Auto Bed Leveling grid and Delta
    */
-  #if defined(Z_PROBE_ALLEN_KEY) && !(defined(AUTO_BED_LEVELING_GRID) && defined(DELTA))
-    #error Invalid use of Z_PROBE_ALLEN_KEY.
+  #if defined(Z_PROBE_DEPLOY) && !(defined(Z_PROBE_DEPLOY_1_X) && defined(Z_PROBE_STOW_X) && defined(AUTO_BED_LEVELING_GRID) && defined(DELTA))
+    #error Invalid use of Z_PROBE_DEPLOY.
   #endif
 
   /**

@@ -1298,26 +1298,38 @@ static void setup_for_endstop_move() {
         #endif
       }
 
-    #elif defined(Z_PROBE_ALLEN_KEY)
+    #elif defined(Z_PROBE_DEPLOY)
 
       feedrate = homing_feedrate[X_AXIS];
 
-      // Move to the start position to initiate deployment
-      destination[X_AXIS] = Z_PROBE_ALLEN_KEY_DEPLOY_X;
-      destination[Y_AXIS] = Z_PROBE_ALLEN_KEY_DEPLOY_Y;
-      destination[Z_AXIS] = Z_PROBE_ALLEN_KEY_DEPLOY_Z;
-      prepare_move_raw(); // this will also set_current_to_destination
+      // Allow up to three moves to deploy the probe.  This usually follows:
+      // * Move to the start position to initiate deployment
+      // * Home X to (almost) touch the belt/arms
+      // * Move X/Y to a position that the belt/arms drop the probe.
+      #if defined(Z_PROBE_DEPLOY_1_X) && defined(Z_PROBE_DEPLOY_1_Y) && defined(Z_PROBE_DEPLOY_1_Z)
+        destination[X_AXIS] = Z_PROBE_DEPLOY_1_X;
+        destination[Y_AXIS] = Z_PROBE_DEPLOY_1_Y;
+        destination[Z_AXIS] = Z_PROBE_DEPLOY_1_Z;
+        feedrate = Z_PROBE_DEPLOY_1_FEEDRATE;
+        prepare_move_raw(); // this will also set_current_to_destination
+      #endif // Z_PROBE_DEPLOY_1_*
 
-      // Home X to touch the belt
-      feedrate = homing_feedrate[X_AXIS]/10;
-      destination[X_AXIS] = 0;
-      prepare_move_raw(); // this will also set_current_to_destination
-      
-      // Home Y for safety
-      feedrate = homing_feedrate[X_AXIS]/2;
-      destination[Y_AXIS] = 0;
-      prepare_move_raw(); // this will also set_current_to_destination
-      
+      #if defined(Z_PROBE_DEPLOY_2_X) && defined(Z_PROBE_DEPLOY_2_Y) && defined(Z_PROBE_DEPLOY_2_Z)
+        destination[X_AXIS] = Z_PROBE_DEPLOY_2_X;
+        destination[Y_AXIS] = Z_PROBE_DEPLOY_2_Y;
+        destination[Z_AXIS] = Z_PROBE_DEPLOY_2_Z;
+        feedrate = Z_PROBE_DEPLOY_2_FEEDRATE;
+        prepare_move_raw(); // this will also set_current_to_destination
+      #endif // Z_PROBE_DEPLOY_2_*
+
+      #if defined(Z_PROBE_DEPLOY_3_X) && defined(Z_PROBE_DEPLOY_3_Y) && defined(Z_PROBE_DEPLOY_3_Z)
+        destination[X_AXIS] = Z_PROBE_DEPLOY_3_X;
+        destination[Y_AXIS] = Z_PROBE_DEPLOY_3_Y;
+        destination[Z_AXIS] = Z_PROBE_DEPLOY_3_Z;
+        feedrate = Z_PROBE_DEPLOY_3_FEEDRATE;
+        prepare_move_raw(); // this will also set_current_to_destination
+      #endif // Z_PROBE_DEPLOY_3_*
+
       st_synchronize();
 
       #ifdef Z_PROBE_ENDSTOP
@@ -1336,7 +1348,7 @@ static void setup_for_endstop_move() {
           Stop();
         }
 
-    #endif // Z_PROBE_ALLEN_KEY
+    #endif // defined(Z_PROBE_DEPLOY)
 
   }
 
@@ -1366,35 +1378,36 @@ static void setup_for_endstop_move() {
         #endif
       }
 
-    #elif defined(Z_PROBE_ALLEN_KEY)
+    #elif defined(Z_PROBE_DEPLOY)
+      // Push up the Z probe by moving the end effector, no servo needed.
 
-      // Move up for safety
+      // Put the end effector high enough up that it won't crash the head when moving to Z_PROBE_STOW_*
       feedrate = homing_feedrate[X_AXIS];
       destination[Z_AXIS] = current_position[Z_AXIS] + Z_RAISE_AFTER_PROBING;
       prepare_move_raw(); // this will also set_current_to_destination
 
       // Move to the start position to initiate retraction
-      destination[X_AXIS] = Z_PROBE_ALLEN_KEY_STOW_X;
-      destination[Y_AXIS] = Z_PROBE_ALLEN_KEY_STOW_Y;
-      destination[Z_AXIS] = Z_PROBE_ALLEN_KEY_STOW_Z;
+      destination[X_AXIS] = Z_PROBE_STOW_X;
+      destination[Y_AXIS] = Z_PROBE_STOW_Y;
+      destination[Z_AXIS] = Z_PROBE_STOW_Z;
       prepare_move_raw(); // this will also set_current_to_destination
 
       // Move the nozzle down to push the probe into retracted position
       feedrate = homing_feedrate[Z_AXIS]/10;
-      destination[Z_AXIS] = current_position[Z_AXIS] - Z_PROBE_ALLEN_KEY_STOW_DEPTH;
+      destination[Z_AXIS] = current_position[Z_AXIS] - Z_PROBE_STOW_DEPTH;
       prepare_move_raw(); // this will also set_current_to_destination
-      
+
       // Move up for safety
       feedrate = homing_feedrate[Z_AXIS]/2;
-      destination[Z_AXIS] = current_position[Z_AXIS] + Z_PROBE_ALLEN_KEY_STOW_DEPTH * 2;
+      destination[Z_AXIS] = current_position[Z_AXIS] + Z_PROBE_STOW_DEPTH * 2;
       prepare_move_raw(); // this will also set_current_to_destination
-      
+
       // Home XY for safety
       feedrate = homing_feedrate[X_AXIS]/2;
       destination[X_AXIS] = 0;
       destination[Y_AXIS] = 0;
       prepare_move_raw(); // this will also set_current_to_destination
-      
+
       st_synchronize();
 
       #ifdef Z_PROBE_ENDSTOP
@@ -1413,7 +1426,7 @@ static void setup_for_endstop_move() {
           Stop();
         }
 
-    #endif // Z_PROBE_ALLEN_KEY
+    #endif // defined(Z_PROBE_DEPLOY)
 
   }
 
@@ -1430,7 +1443,7 @@ static void setup_for_endstop_move() {
     do_blocking_move_to(current_position[X_AXIS], current_position[Y_AXIS], z_before); // this also updates current_position
     do_blocking_move_to(x - X_PROBE_OFFSET_FROM_EXTRUDER, y - Y_PROBE_OFFSET_FROM_EXTRUDER, current_position[Z_AXIS]); // this also updates current_position
 
-    #if !defined(Z_PROBE_SLED) && !defined(Z_PROBE_ALLEN_KEY)
+    #if !defined(Z_PROBE_SLED) && !defined(Z_PROBE_DEPLOY)
       if (probe_action & ProbeDeploy) deploy_z_probe();
     #endif
 
@@ -1444,7 +1457,7 @@ static void setup_for_endstop_move() {
       }
     #endif
 
-    #if !defined(Z_PROBE_SLED) && !defined(Z_PROBE_ALLEN_KEY)
+    #if !defined(Z_PROBE_SLED) && !defined(Z_PROBE_DEPLOY)
       if (probe_action & ProbeStow) stow_z_probe();
     #endif
 
@@ -2567,7 +2580,7 @@ inline void gcode_G28() {
 
     #ifdef Z_PROBE_SLED
       dock_sled(false); // engage (un-dock) the probe
-    #elif defined(Z_PROBE_ALLEN_KEY) //|| defined(SERVO_LEVELING)
+    #elif defined(Z_PROBE_DEPLOY) //|| defined(SERVO_LEVELING)
       deploy_z_probe();
     #endif
 
@@ -2789,7 +2802,7 @@ inline void gcode_G28() {
 
     #ifdef Z_PROBE_SLED
       dock_sled(true); // dock the probe
-    #elif defined(Z_PROBE_ALLEN_KEY) //|| defined(SERVO_LEVELING)
+    #elif defined(Z_PROBE_DEPLOY) //|| defined(SERVO_LEVELING)
       stow_z_probe();
     #endif
 
@@ -4598,7 +4611,7 @@ inline void gcode_M303() {
  */
 inline void gcode_M400() { st_synchronize(); }
 
-#if defined(ENABLE_AUTO_BED_LEVELING) && !defined(Z_PROBE_SLED) && (defined(SERVO_ENDSTOPS) || defined(Z_PROBE_ALLEN_KEY))
+#if defined(ENABLE_AUTO_BED_LEVELING) && !defined(Z_PROBE_SLED) && (defined(SERVO_ENDSTOPS) || defined(Z_PROBE_DEPLOY))
 
   #ifdef SERVO_ENDSTOPS
     void raise_z_for_servo() {
@@ -5629,7 +5642,7 @@ void process_next_command() {
         gcode_M400();
         break;
 
-      #if defined(ENABLE_AUTO_BED_LEVELING) && (defined(SERVO_ENDSTOPS) || defined(Z_PROBE_ALLEN_KEY)) && !defined(Z_PROBE_SLED)
+      #if defined(ENABLE_AUTO_BED_LEVELING) && (defined(SERVO_ENDSTOPS) || defined(Z_PROBE_DEPLOY)) && !defined(Z_PROBE_SLED)
         case 401:
           gcode_M401();
           break;
